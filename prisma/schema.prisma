@@ -1,0 +1,288 @@
+// Cybersecurity Command Center — Prisma schema
+// SQLite (local-first). JSON-encoded arrays stored as String per platform rule.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Project Registry ───────────────────────────────────────────────────────
+
+model Project {
+  id                     String   @id @default(cuid())
+  name                   String
+  description            String?
+  category               String?
+  tags                   String   @default("[]")     // JSON array
+  localPath              String                     // canonical
+  repoUrl                String?
+  gitBranch              String?
+  language               String?                    // discovered
+  framework              String?                    // discovered
+  packageManager         String?                    // discovered
+  techStack              String   @default("[]")     // JSON array
+  readmePath             String?
+  entryPoint             String?
+  runCommand             String?
+  stopCommand            String?
+  buildCommand           String?
+  testCommand            String?
+  healthEndpoint         String?
+  ports                  String   @default("[]")     // JSON array of numbers
+  envVars                String   @default("{}")     // JSON object
+  status                 String   @default("REGISTERED")
+  health                 String   @default("UNKNOWN")
+  verificationStatus     String   @default("UNVERIFIED")
+  lastVerificationAt     DateTime?
+  lastRunAt              DateTime?
+  lastSuccessfulRunAt    DateTime?
+  lastFailureAt          DateTime?
+  lastFailureReason      String?
+  notes                  String?
+  securityClassification String?
+  complianceRelevance    String   @default("[]")    // JSON array of framework codes
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  discoveries  ProjectDiscovery[]
+  readmes      ReadmeInference[]
+  executions   ProjectExecution[]
+  logs         ProjectLog[]
+  scans        ScanRun[]
+  findings     ScanFinding[]
+  auditEvents  AuditEvent[]  @relation("AuditProject")
+
+  @@index([status])
+  @@index([category])
+}
+
+model ProjectDiscovery {
+  id          String   @id @default(cuid())
+  projectId   String
+  snapshot    String                 // JSON
+  createdAt   DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ReadmeInference {
+  id          String   @id @default(cuid())
+  projectId   String
+  path        String
+  commands    String                 // JSON array
+  rendered    String?
+  createdAt   DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ProjectExecution {
+  id          String   @id @default(cuid())
+  projectId   String
+  action      String                 // run|stop|restart|verify|dryRun
+  command     String
+  pid         Int?
+  exitCode    Int?
+  status      String                 // running|completed|failed|timeout|killed
+  reason      String?
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  logs        ProjectLog[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model ProjectLog {
+  id          String   @id @default(cuid())
+  projectId   String
+  executionId String?
+  stream      String                 // stdout|stderr|event
+  line        String
+  ts          DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  execution   ProjectExecution? @relation(fields: [executionId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([executionId])
+  @@index([ts])
+}
+
+// ─── Scans ────────────────────────────────────────────────────────────────────
+
+model ScanRun {
+  id          String   @id @default(cuid())
+  projectId   String
+  scanner     String
+  status      String                 // running|completed|failed
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  summary     String?                // JSON
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  findings    ScanFinding[]
+
+  @@index([projectId])
+}
+
+model ScanFinding {
+  id          String   @id @default(cuid())
+  scanRunId   String
+  projectId   String
+  scanner     String
+  severity    String                 // critical|high|medium|low|info
+  rule        String
+  title       String
+  description String
+  evidence    String
+  confidence  String                 // high|medium|low
+  createdAt   DateTime @default(now())
+  scanRun     ScanRun  @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([scanRunId])
+  @@index([severity])
+}
+
+// ─── Knowledge ─────────────────────────────────────────────────────────────────
+
+model SecurityTool {
+  id                 String   @id @default(cuid())
+  name               String
+  category           String
+  purpose            String
+  platforms          String   @default("[]")     // JSON array
+  input              String?
+  output             String?
+  license            String?
+  officialUrl        String
+  officialSource     String
+  verificationStatus String   @default("UNVERIFIED")
+  lastVerifiedAt     DateTime?
+  tags               String   @default("[]")     // JSON array
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([category])
+}
+
+model OwaspEntry {
+  id                 String   @id @default(cuid())
+  list               String   // web-2021|api-2023|mobile-2024|llm-2025
+  rank               String   // A01 etc.
+  name               String
+  summary            String
+  mitigations        String   @default("[]")  // JSON array
+  officialUrl        String
+  verificationStatus String   @default("UNVERIFIED")
+  lastVerifiedAt     DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([list])
+}
+
+model AiSecurityEntry {
+  id                 String   @id @default(cuid())
+  category           String
+  name               String
+  summary            String
+  mitigations        String   @default("[]")
+  officialUrl        String
+  verificationStatus String   @default("UNVERIFIED")
+  lastVerifiedAt     DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([category])
+}
+
+// ─── Compliance ───────────────────────────────────────────────────────────────
+
+model ComplianceFramework {
+  id                 String   @id @default(cuid())
+  code               String   @unique    // GDPR|NIS2|CRA|DORA|EU-AI-ACT
+  name               String
+  kind               String   // law|regulation|directive|standard
+  officialUrl        String
+  verificationStatus String   @default("UNVERIFIED")
+  lastVerifiedAt     DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  controls           ComplianceControl[]
+}
+
+model ComplianceControl {
+  id              String   @id @default(cuid())
+  frameworkId     String
+  code            String   // e.g. GDPR-32-1
+  title           String
+  description     String
+  applicability   String   @default("UNKNOWN")
+  evidence        String?   // JSON
+  status          String   @default("unknown") // gap|partial|met|unknown
+  lastReviewedAt  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  framework       ComplianceFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  @@index([frameworkId])
+  @@index([applicability])
+}
+
+// ─── Audit ─────────────────────────────────────────────────────────────────────
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  ts          DateTime @default(now())
+  actor       String   @default("local-user")
+  action      String
+  objectType  String
+  objectId    String?
+  result      String                       // success|failure
+  reason      String?
+  metadata    String   @default("{}")       // JSON, post-redaction
+  projectId   String?
+  project     Project? @relation("AuditProject", fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([objectType])
+  @@index([ts])
+}
+
+// ─── Settings & Data Sources ───────────────────────────────────────────────────
+
+model Settings {
+  id                          Int      @id @default(1)
+  allowedProjectRoots         String   @default("[]")  // JSON array
+  typoCorrection              Boolean  @default(true)
+  bindLocalhost               Boolean  @default(true)
+  maxLogLinesPerProject       Int      @default(5000)
+  commandTimeoutMs            Int      @default(60000)
+  externalFetchEnabled        Boolean  @default(true)
+  aiAssistanceEnabled        Boolean  @default(true)
+  updatedAt                   DateTime @updatedAt
+}
+
+model DataSource {
+  id                  String   @id @default(cuid())
+  code                String   @unique
+  name                String
+  trustTier           Int      @default(1)
+  endpoint            String
+  lastSuccessAt       DateTime?
+  lastFailureAt       DateTime?
+  lastFailureReason   String?
+  freshness           String   @default("unknown") // fresh|stale|unknown
+  cachedAt            DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
