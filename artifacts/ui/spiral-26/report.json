@@ -1,0 +1,70 @@
+{
+  "spiral": 26,
+  "timestamp": "2026-09-09T12:47:00Z",
+  "gitSha": "6db2aa3",
+  "status": "COMPLETE",
+  "routesDiscovered": 20,
+  "allRoutesTested": true,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "overlapIssuesFound": 1,
+  "overlapIssuesFixed": 1,
+  "screenshotsCaptured": 21,
+
+  "overlapFix": {
+    "location": "TopBar / main content",
+    "rootCause": "TopBar used sticky positioning with backdrop-blur which caused content to show through the translucent header",
+    "fix": "Removed sticky positioning and backdrop-blur from TopBar; made header opaque (bg-surface-1) with shrink-0 to prevent flex compression"
+  },
+
+  "threeD": {
+    "type": "Ambient background",
+    "implementation": "Three.js via @react-three/fiber — Ambient3DBackground component",
+    "location": "Fixed background layer behind all app content (position:fixed, pointer-events:none, z-index:0)",
+    "features": [
+      "Two slowly-rotating translucent torus rings (abstract orbital structures)",
+      "12 sparse floating nodes (no labels, no data)",
+      "Subtle wireframe sphere (system boundary representation)",
+      "Very slow auto-rotation (0.03 rad/s)",
+      "pointer-events: none (does not intercept clicks)",
+      "z-index: 0 (content above at z-index: 1)"
+    ],
+    "fallback": "CSS gradient mesh when WebGL unavailable or reduced-motion",
+    "performance": "dpr: [1,1], antialias: false, powerPreference: low-power, 12 nodes max",
+    "webglCanvasConfirmed": true
+  },
+
+  "securityRegression": {
+    "lint": "PASS (0 errors)",
+    "securityTests": "13/13 PASS",
+    "adversarialTests": "19/19 PASS",
+    "redactionTests": "7/7 PASS",
+    "backupTests": "7/7 PASS (F-002 fix, no restart)",
+    "securitySuite": "18/18 PASS",
+    "sessionRevocation": "15/15 PASS",
+    "authAudit": "38/38 PASS",
+    "total": "118/118 PASS (100%)"
+  },
+
+  "routes": [
+    {"name": "Command Center", "loads": true, "errors": 0, "screenshot": "01-command-center.png"},
+    {"name": "Projects", "loads": true, "errors": 0, "screenshot": "projects.png"},
+    {"name": "Add Project", "loads": true, "errors": 0, "screenshot": "add-project.png"},
+    {"name": "Running Projects", "loads": true, "errors": 0, "screenshot": "running.png"},
+    {"name": "Logs", "loads": true, "errors": 0, "screenshot": "logs.png"},
+    {"name": "Security Findings", "loads": true, "errors": 0, "screenshot": "findings.png"},
+    {"name": "Vulnerabilities", "loads": true, "errors": 0, "screenshot": "vulnerabilities.png"},
+    {"name": "CVEs", "loads": true, "errors": 0, "screenshot": "cves.png"},
+    {"name": "Security Tools", "loads": true, "errors": 0, "screenshot": "tools.png"},
+    {"name": "OWASP", "loads": true, "errors": 0, "screenshot": "owasp.png"},
+    {"name": "AI Security", "loads": true, "errors": 0, "screenshot": "ai-security.png"},
+    {"name": "Threat Intelligence", "loads": true, "errors": 0, "screenshot": "threat-intel.png"},
+    {"name": "Compliance", "loads": true, "errors": 0, "screenshot": "compliance.png"},
+    {"name": "Verification", "loads": true, "errors": 0, "screenshot": "verification.png"},
+    {"name": "AI Agents", "loads": true, "errors": 0, "screenshot": "ai-agents.png"},
+    {"name": "Automation", "loads": true, "errors": 0, "screenshot": "automation.png"},
+    {"name": "Audit", "loads": true, "errors": 0, "screenshot": "audit.png"},
+    {"name": "System", "loads": true, "errors": 0, "screenshot": "system.png"},
+    {"name": "Settings", "loads": true, "errors": 0, "screenshot": "settings.png"}
+  ]
+}

@@ -9,6 +9,7 @@ import { record } from '@/lib/cyber/audit/record';
 import { redact } from '@/lib/cyber/security/redact';
 import { z } from 'zod';
 import type { ProjectRow } from '@/lib/cyber/types';
+import { requireAuth } from '@/lib/cyber/auth';
 
 export const runtime = 'nodejs';
 
@@ -41,6 +42,9 @@ const patchSchema = z.object({
 });
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const __auth = await requireAuth(_req, 'read');
+  if (!__auth.ok) return __auth.response!;
+
   const { id } = await ctx.params;
   const p = await db.project.findUnique({ where: { id }, include: { _count: { select: { findings: true } } } });
   if (!p) return err('NOT_FOUND', 'Project not found', 404);
@@ -49,6 +53,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
+  const __auth = await requireAuth(req, 'update');
+  if (!__auth.ok) return __auth.response!;
   const existing = await db.project.findUnique({ where: { id } });
   if (!existing) return err('NOT_FOUND', 'Project not found', 404);
   const body = await req.json().catch(() => null);
@@ -67,6 +73,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
+  const __auth = await requireAuth(req, 'delete');
+  if (!__auth.ok) return __auth.response!;
   const body = await req.json().catch(() => null);
   if (!body || body.confirm !== true) return err('INVALID_INPUT', 'Confirmation required: pass { confirm: true }', 400);
   const existing = await db.project.findUnique({ where: { id } });

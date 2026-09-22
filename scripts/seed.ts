@@ -110,7 +110,7 @@ async function main() {
           name: t.name, category: t.category, purpose: t.purpose,
           platforms: JSON.stringify(t.platforms), license: t.license ?? null,
           officialUrl: t.officialUrl, officialSource: t.officialSource,
-          verificationStatus: 'VERIFIED', lastVerifiedAt: new Date(),
+          verificationStatus: 'UNVERIFIED', lastVerifiedAt: null,
           tags: JSON.stringify(t.tags ?? []),
         },
       });
@@ -163,7 +163,7 @@ async function main() {
         data: {
           list: o.list, rank: o.rank, name: o.name, summary: o.summary,
           mitigations: JSON.stringify(o.mitigations), officialUrl: o.officialUrl,
-          verificationStatus: 'VERIFIED', lastVerifiedAt: new Date(),
+          verificationStatus: 'UNVERIFIED', lastVerifiedAt: null,
         },
       });
     }
@@ -195,7 +195,7 @@ async function main() {
         data: {
           category: a.category, name: a.name, summary: a.summary,
           mitigations: JSON.stringify(a.mitigations), officialUrl: a.officialUrl,
-          verificationStatus: 'VERIFIED', lastVerifiedAt: new Date(),
+          verificationStatus: 'UNVERIFIED', lastVerifiedAt: null,
         },
       });
     }
@@ -259,7 +259,7 @@ async function main() {
   for (const fw of frameworks) {
     const foundFw = await db.complianceFramework.findUnique({ where: { code: fw.code } });
     const frameworkId = foundFw?.id ?? (await db.complianceFramework.create({
-      data: { code: fw.code, name: fw.name, kind: fw.kind, officialUrl: fw.officialUrl, verificationStatus: 'VERIFIED', lastVerifiedAt: new Date() },
+      data: { code: fw.code, name: fw.name, kind: fw.kind, officialUrl: fw.officialUrl, verificationStatus: 'UNVERIFIED', lastVerifiedAt: null },
     })).id;
     for (const c of fw.controls) {
       const foundCtrl = await db.complianceControl.findFirst({ where: { frameworkId, code: c.code } });

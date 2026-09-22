@@ -4,11 +4,15 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { ok, err } from '@/lib/cyber/api';
 import { record } from '@/lib/cyber/audit/record';
+import { requireAuth } from '@/lib/cyber/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ code: string }> }) {
+  const __auth = await requireAuth(_req, 'admin');
+  if (!__auth.ok) return __auth.response!;
+
   const { code } = await ctx.params;
   const source = await db.dataSource.findUnique({ where: { code } });
   if (!source) return err('NOT_FOUND', 'Data source not found', 404);

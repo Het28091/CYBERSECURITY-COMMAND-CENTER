@@ -1,15 +1,20 @@
 // GET /api/system/health — probe DB, FS, WS
 
+import { NextRequest } from 'next/server';
 import { ok } from '@/lib/cyber/api';
 import { db } from '@/lib/db';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import http from 'node:http';
+import { requireAuth } from '@/lib/cyber/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const __auth = await requireAuth(req, 'read');
+  if (!__auth.ok) return __auth.response!;
+
   let dbOk: 'ok' | 'fail' = 'ok';
   let fsOk: 'ok' | 'fail' = 'ok';
   let wsOk: 'ok' | 'fail' = 'ok';
@@ -26,13 +31,13 @@ export async function GET() {
   // Probe the WS service.
   wsOk = await new Promise<'ok' | 'fail'>((resolve) => {
     try {
-      const req = http.request({ host: '127.0.0.1', port: 3003, path: '/', method: 'GET', timeout: 1500 }, (res) => {
+      const probeReq = http.request({ host: '127.0.0.1', port: 3003, path: '/', method: 'GET', timeout: 1500 }, (res) => {
         res.destroy();
         resolve('ok');
       });
-      req.on('error', () => resolve('fail'));
-      req.on('timeout', () => { req.destroy(); resolve('fail'); });
-      req.end();
+      probeReq.on('error', () => resolve('fail'));
+      probeReq.on('timeout', () => { probeReq.destroy(); resolve('fail'); });
+      probeReq.end();
     } catch { resolve('fail'); }
   });
 

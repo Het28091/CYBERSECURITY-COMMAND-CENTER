@@ -6,11 +6,15 @@ import { ok, err, jParse } from '@/lib/cyber/api';
 import { proc } from '@/lib/cyber/runner/process';
 import * as net from 'node:net';
 import * as http from 'node:http';
+import { requireAuth } from '@/lib/cyber/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const __auth = await requireAuth(_req, 'read');
+  if (!__auth.ok) return __auth.response!;
+
   const { id } = await ctx.params;
   const project = await db.project.findUnique({ where: { id } });
   if (!project) return err('NOT_FOUND', 'Project not found', 404);

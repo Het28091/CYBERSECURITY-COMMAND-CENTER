@@ -75,8 +75,17 @@ function FrameworkDetail({ fw }: { fw: any }) {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Kind</span>
-            <span className="font-mono uppercase">{fw.kind}</span>
-            <span className="text-[10px] text-muted-foreground ml-2">(LAW · REGULATION · DIRECTIVE · DELEGATED ACT · IMPLEMENTING ACT · STANDARD · CERTIFICATION · GUIDANCE · BEST PRACTICE — only the kind label above applies to this framework)</span>
+            <span className={`inline-flex items-center text-[11px] font-mono px-2 py-0.5 rounded border ${
+              fw.kind === 'regulation' ? 'text-red-400 border-red-500/40 bg-red-500/10' :
+              fw.kind === 'directive' ? 'text-amber-400 border-amber-500/40 bg-amber-500/10' :
+              fw.kind === 'law' ? 'text-red-400 border-red-500/40 bg-red-500/10' :
+              fw.kind === 'standard' ? 'text-blue-400 border-blue-500/40 bg-blue-500/10' :
+              fw.kind === 'guidance' ? 'text-slate-400 border-slate-500/40 bg-slate-500/10' :
+              'text-slate-400 border-slate-500/40 bg-slate-500/10'
+            }`}>{fw.kind.toUpperCase()}</span>
+            <span className="text-[10px] text-muted-foreground ml-2">
+              (LAW · REGULATION · DIRECTIVE · DELEGATED ACT · IMPLEMENTING ACT · STANDARD · CERTIFICATION · GUIDANCE · BEST PRACTICE — only the kind label above applies to this framework)
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Source</span>

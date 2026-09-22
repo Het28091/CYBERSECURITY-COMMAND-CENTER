@@ -5,11 +5,15 @@ import { db } from '@/lib/db';
 import { ok, err } from '@/lib/cyber/api';
 import { proc } from '@/lib/cyber/runner/process';
 import { record } from '@/lib/cyber/audit/record';
+import { requireAuth } from '@/lib/cyber/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const __auth = await requireAuth(req, 'run');
+  if (!__auth.ok) return __auth.response!;
+
   const { id } = await ctx.params;
   const project = await db.project.findUnique({ where: { id } });
   if (!project) return err('NOT_FOUND', 'Project not found', 404);

@@ -1,0 +1,72 @@
+{
+  "auditId": "SPIRAL-25-FULL-UI-AUDIT",
+  "timestamp": "2026-09-09T12:30:00Z",
+  "gitSha": "6db2aa3",
+  "status": "COMPLETE",
+  "totalViews": 21,
+  "allViewsTested": true,
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "overlapIssues": 0,
+  "zIndexIssues": 0,
+  "responsiveIssues": 0,
+
+  "views": [
+    { "id": "login", "name": "Login", "loads": true, "errors": 0, "screenshot": "00-login.png" },
+    { "id": "command-center", "name": "Command Center", "loads": true, "errors": 0, "has3D": true, "screenshot": "command-center.png" },
+    { "id": "projects", "name": "Projects", "loads": true, "errors": 0, "screenshot": "projects.png" },
+    { "id": "add-project", "name": "Add Project", "loads": true, "errors": 0, "screenshot": "add-project.png" },
+    { "id": "running", "name": "Running Projects", "loads": true, "errors": 0, "screenshot": "running.png" },
+    { "id": "logs", "name": "Logs", "loads": true, "errors": 0, "screenshot": "logs.png" },
+    { "id": "findings", "name": "Security Findings", "loads": true, "errors": 0, "screenshot": "findings.png" },
+    { "id": "vulnerabilities", "name": "Vulnerabilities", "loads": true, "errors": 0, "screenshot": "vulnerabilities.png" },
+    { "id": "cves", "name": "CVEs", "loads": true, "errors": 0, "screenshot": "cves.png" },
+    { "id": "tools", "name": "Security Tools", "loads": true, "errors": 0, "screenshot": "tools.png" },
+    { "id": "owasp", "name": "OWASP", "loads": true, "errors": 0, "screenshot": "owasp.png" },
+    { "id": "ai-security", "name": "AI Security", "loads": true, "errors": 0, "screenshot": "ai-security.png" },
+    { "id": "threat-intel", "name": "Threat Intelligence", "loads": true, "errors": 0, "screenshot": "threat-intel.png" },
+    { "id": "compliance", "name": "Compliance", "loads": true, "errors": 0, "screenshot": "compliance.png" },
+    { "id": "verification", "name": "Verification", "loads": true, "errors": 0, "screenshot": "verification.png" },
+    { "id": "ai-agents", "name": "AI Agents", "loads": true, "errors": 0, "screenshot": "ai-agents.png" },
+    { "id": "automation", "name": "Automation", "loads": true, "errors": 0, "screenshot": "automation.png" },
+    { "id": "audit", "name": "Audit", "loads": true, "errors": 0, "screenshot": "audit.png" },
+    { "id": "system", "name": "System", "loads": true, "errors": 0, "screenshot": "system.png" },
+    { "id": "settings", "name": "Settings", "loads": true, "errors": 0, "screenshot": "settings.png" },
+    { "id": "project-detail", "name": "Project Detail", "loads": true, "errors": 0, "screenshot": "project-detail.png" }
+  ],
+
+  "threeD": {
+    "implemented": true,
+    "library": "three@0.186.0 + @react-three/fiber@9.7.0 + @react-three/drei@10.7.8",
+    "location": "Command Center dashboard",
+    "type": "Interactive WebGL security topology",
+    "features": [
+      "Project nodes on sphere formation",
+      "Color-coded status (green=running, red=failed, gray=stopped, amber=degraded, blue=default)",
+      "Dependency edges between nearby nodes",
+      "Orbit controls (rotate, zoom, pan disabled)",
+      "Click nodes to open project detail",
+      "Floating animation (reduced-motion respected)",
+      "Auto-rotation (disabled when reduced-motion)"
+    ],
+    "fallback": "2D grid of project cards with status dots",
+    "webglCanvasConfirmed": true,
+    "maxNodes": 30,
+    "dpr": [1, 1.5]
+  },
+
+  "securityRegression": {
+    "lint": "PASS (0 errors)",
+    "securityTests": "13/13 PASS",
+    "adversarialTests": "19/19 PASS",
+    "redactionTests": "7/7 PASS",
+    "backupTests": "7/7 PASS (F-002 fix, no restart)",
+    "securitySuite": "18/18 PASS",
+    "sessionRevocation": "15/15 PASS",
+    "authAudit": "38/38 PASS",
+    "total": "118/118 PASS (100%)"
+  },
+
+  "screenshotsDirectory": "artifacts/ui/spiral-25/",
+  "totalScreenshots": 22
+}

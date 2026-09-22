@@ -27,7 +27,7 @@
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
+  --color-muted-foreground: var(---muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
@@ -37,117 +37,137 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-
-  /* Cybersecurity severity palette */
   --color-sev-critical: var(--sev-critical);
   --color-sev-high: var(--sev-high);
   --color-sev-medium: var(--sev-medium);
   --color-sev-low: var(--sev-low);
   --color-sev-info: var(--sev-info);
-
-  /* Status signal palette (non-color-only via icons) */
   --color-signal-ok: var(--signal-ok);
   --color-signal-warn: var(--signal-warn);
   --color-signal-fail: var(--signal-fail);
   --color-signal-idle: var(--signal-idle);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-edge: var(--edge);
+  --color-edge-subtle: var(--edge-subtle);
+  --color-glow-primary: var(--glow-primary);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ─── Light theme (rarely used; dark-first) ─── */
 :root {
-  --radius: 0.625rem;
-
-  /* Light theme — kept for completeness; default is dark. */
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.16 0 0);
+  --radius: 0.5rem;
+  --background: oklch(0.98 0.002 250);
+  --foreground: oklch(0.18 0.005 250);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0 0);
+  --card-foreground: oklch(0.18 0.005 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0 0);
-  --primary: oklch(0.21 0.02 240);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.21 0.02 240);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.93 0.01 240);
-  --accent-foreground: oklch(0.21 0.02 240);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
-  --ring: oklch(0.55 0.05 240);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.97 0 0);
-  --sidebar-foreground: oklch(0.16 0 0);
-  --sidebar-primary: oklch(0.21 0.02 240);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.93 0.01 240);
-  --sidebar-accent-foreground: oklch(0.21 0.02 240);
-  --sidebar-border: oklch(0.9 0 0);
-  --sidebar-ring: oklch(0.55 0.05 240);
+  --popover-foreground: oklch(0.18 0.005 250);
+  --primary: oklch(0.50 0.15 220);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.95 0.003 250);
+  --secondary-foreground: oklch(0.22 0.005 250);
+  --muted: oklch(0.95 0.003 250);
+  --muted-foreground: oklch(0.50 0.005 250);
+  --accent: oklch(0.93 0.005 250);
+  --accent-foreground: oklch(0.22 0.005 250);
+  --destructive: oklch(0.55 0.24 27);
+  --border: oklch(0.88 0.003 250);
+  --input: oklch(0.88 0.003 250);
+  --ring: oklch(0.50 0.15 220);
+  --chart-1: oklch(0.55 0.22 27);
+  --chart-2: oklch(0.60 0.18 70);
+  --chart-3: oklch(0.55 0.15 220);
+  --chart-4: oklch(0.55 0.16 145);
+  --chart-5: oklch(0.55 0.18 290);
+  --sidebar: oklch(0.96 0.002 250);
+  --sidebar-foreground: oklch(0.18 0.005 250);
+  --sidebar-primary: oklch(0.50 0.15 220);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.93 0.005 250);
+  --sidebar-accent-foreground: oklch(0.22 0.005 250);
+  --sidebar-border: oklch(0.88 0.003 250);
+  --sidebar-ring: oklch(0.50 0.15 220);
 
-  --sev-critical: oklch(0.55 0.22 27);
+  --sev-critical: oklch(0.55 0.24 27);
   --sev-high: oklch(0.62 0.21 41);
   --sev-medium: oklch(0.72 0.18 70);
-  --sev-low: oklch(0.6 0.13 220);
+  --sev-low: oklch(0.60 0.13 220);
   --sev-info: oklch(0.55 0.02 240);
 
   --signal-ok: oklch(0.65 0.16 145);
   --signal-warn: oklch(0.75 0.18 70);
-  --signal-fail: oklch(0.55 0.22 27);
-  --signal-idle: oklch(0.6 0.02 240);
+  --signal-fail: oklch(0.55 0.24 27);
+  --signal-idle: oklch(0.60 0.02 240);
+
+  --surface-0: oklch(0.98 0.002 250);
+  --surface-1: oklch(1 0 0);
+  --surface-2: oklch(0.96 0.002 250);
+  --surface-3: oklch(0.94 0.003 250);
+  --edge: oklch(0.85 0.003 250);
+  --edge-subtle: oklch(0.92 0.002 250);
+  --glow-primary: oklch(0.50 0.15 220 / 0.08);
 }
 
+/* ─── Dark theme (primary) — premium cybersecurity workstation ─── */
 .dark {
-  /* Dark-first cybersecurity aesthetic: near-black with subtle blue undertone. */
-  --background: oklch(0.155 0.008 250);
-  --foreground: oklch(0.96 0.005 250);
-  --card: oklch(0.195 0.01 250);
-  --card-foreground: oklch(0.96 0.005 250);
-  --popover: oklch(0.195 0.01 250);
-  --popover-foreground: oklch(0.96 0.005 250);
-  --primary: oklch(0.78 0.13 195);        /* cyan accent */
-  --primary-foreground: oklch(0.16 0.01 250);
-  --secondary: oklch(0.245 0.01 250);
-  --secondary-foreground: oklch(0.96 0.005 250);
-  --muted: oklch(0.245 0.01 250);
-  --muted-foreground: oklch(0.7 0.01 250);
-  --accent: oklch(0.27 0.015 250);
-  --accent-foreground: oklch(0.96 0.005 250);
-  --destructive: oklch(0.65 0.22 22);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.65 0.13 195);
-  --chart-1: oklch(0.65 0.22 27);
-  --chart-2: oklch(0.7 0.18 70);
-  --chart-3: oklch(0.65 0.13 195);
-  --chart-4: oklch(0.55 0.16 145);
-  --chart-5: oklch(0.55 0.18 290);
-  --sidebar: oklch(0.175 0.008 250);
-  --sidebar-foreground: oklch(0.92 0.005 250);
-  --sidebar-primary: oklch(0.78 0.13 195);
-  --sidebar-primary-foreground: oklch(0.16 0.01 250);
-  --sidebar-accent: oklch(0.245 0.012 250);
-  --sidebar-accent-foreground: oklch(0.96 0.005 250);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.65 0.13 195);
+  --background: oklch(0.13 0.006 255);
+  --foreground: oklch(0.94 0.004 255);
+  --card: oklch(0.16 0.008 255);
+  --card-foreground: oklch(0.94 0.004 255);
+  --popover: oklch(0.16 0.008 255);
+  --popover-foreground: oklch(0.94 0.004 255);
+  --primary: oklch(0.72 0.14 200);
+  --primary-foreground: oklch(0.14 0.006 255);
+  --secondary: oklch(0.20 0.008 255);
+  --secondary-foreground: oklch(0.94 0.004 255);
+  --muted: oklch(0.20 0.008 255);
+  --muted-foreground: oklch(0.62 0.008 255);
+  --accent: oklch(0.22 0.010 255);
+  --accent-foreground: oklch(0.94 0.004 255);
+  --destructive: oklch(0.60 0.24 22);
+  --border: oklch(1 0 0 / 6%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(0.60 0.14 200);
+  --chart-1: oklch(0.60 0.24 27);
+  --chart-2: oklch(0.68 0.21 41);
+  --chart-3: oklch(0.62 0.14 200);
+  --chart-4: oklch(0.58 0.16 145);
+  --chart-5: oklch(0.58 0.18 290);
+  --sidebar: oklch(0.14 0.006 255);
+  --sidebar-foreground: oklch(0.88 0.004 255);
+  --sidebar-primary: oklch(0.72 0.14 200);
+  --sidebar-primary-foreground: oklch(0.14 0.006 255);
+  --sidebar-accent: oklch(0.20 0.008 255);
+  --sidebar-accent-foreground: oklch(0.94 0.004 255);
+  --sidebar-border: oklch(1 0 0 / 6%);
+  --sidebar-ring: oklch(0.60 0.14 200);
 
-  --sev-critical: oklch(0.6 0.24 27);
-  --sev-high: oklch(0.68 0.21 41);
+  --sev-critical: oklch(0.58 0.26 27);
+  --sev-high: oklch(0.68 0.22 41);
   --sev-medium: oklch(0.78 0.17 70);
-  --sev-low: oklch(0.62 0.13 220);
-  --sev-info: oklch(0.6 0.02 240);
+  --sev-low: oklch(0.60 0.14 220);
+  --sev-info: oklch(0.58 0.02 240);
 
-  --signal-ok: oklch(0.68 0.16 145);
+  --signal-ok: oklch(0.66 0.16 145);
   --signal-warn: oklch(0.78 0.17 70);
-  --signal-fail: oklch(0.6 0.24 27);
-  --signal-idle: oklch(0.6 0.02 240);
+  --signal-fail: oklch(0.58 0.26 27);
+  --signal-idle: oklch(0.60 0.02 240);
+
+  /* Surface hierarchy: 0 = deepest, 3 = most elevated */
+  --surface-0: oklch(0.11 0.005 255);
+  --surface-1: oklch(0.14 0.006 255);
+  --surface-2: oklch(0.16 0.008 255);
+  --surface-3: oklch(0.18 0.010 255);
+
+  --edge: oklch(1 0 0 / 8%);
+  --edge-subtle: oklch(1 0 0 / 4%);
+  --glow-primary: oklch(0.72 0.14 200 / 0.06);
 }
 
 @layer base {
@@ -156,54 +176,143 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "ss01", "cv11";
+    font-feature-settings: "ss01", "cv11", "cv02";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   ::selection {
-    background: color-mix(in oklch, var(--primary) 30%, transparent);
+    background: color-mix(in oklch, var(--primary) 25%, transparent);
     color: var(--foreground);
   }
 }
 
-/* Custom scrollbars — dense, technical. */
+/* ─── Scrollbars ─── */
 .cyber-scroll {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklch, var(--primary) 25%, transparent) transparent;
+  scrollbar-color: color-mix(in oklch, var(--foreground) 15%, transparent) transparent;
 }
-.cyber-scroll::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+.cyber-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
 .cyber-scroll::-webkit-scrollbar-track { background: transparent; }
 .cyber-scroll::-webkit-scrollbar-thumb {
-  background: color-mix(in oklch, var(--primary) 25%, transparent);
-  border-radius: 4px;
+  background: color-mix(in oklch, var(--foreground) 15%, transparent);
+  border-radius: 3px;
 }
 .cyber-scroll::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in oklch, var(--primary) 45%, transparent);
+  background: color-mix(in oklch, var(--foreground) 30%, transparent);
 }
 
-/* Subtle grid background for the dashboard shell. */
+/* ─── Background grid (subtle) ─── */
 .cyber-grid-bg {
   background-image:
-    radial-gradient(circle at 1px 1px, color-mix(in oklch, var(--foreground) 6%, transparent) 1px, transparent 0);
-  background-size: 24px 24px;
+    radial-gradient(circle at 1px 1px, color-mix(in oklch, var(--foreground) 4%, transparent) 1px, transparent 0);
+  background-size: 32px 32px;
 }
 
-/* Status ring pulse for running processes. */
+/* ─── Surface system ─── */
+.cyber-surface-0 { background: var(--surface-0); }
+.cyber-surface-1 { background: var(--surface-1); }
+.cyber-surface-2 { background: var(--surface-2); }
+.cyber-surface-3 { background: var(--surface-3); }
+
+/* ─── Edge/border system ─── */
+.cyber-edge { border-color: var(--edge); }
+.cyber-edge-subtle { border-color: var(--edge-subtle); }
+
+/* ─── Glow effects (subtle) ─── */
+.cyber-glow {
+  box-shadow: 0 0 0 1px var(--edge-subtle), 0 2px 8px -2px var(--glow-primary);
+}
+.cyber-glow-strong {
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent), 0 4px 20px -4px var(--glow-primary);
+}
+
+/* ─── Pulse animation for running/live indicators ─── */
 @keyframes cyber-pulse-ring {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--signal-ok) 50%, transparent); }
-  50%      { box-shadow: 0 0 0 4px color-mix(in oklch, var(--signal-ok) 0%, transparent); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--signal-ok) 40%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in oklch, var(--signal-ok) 0%, transparent); }
 }
 .cyber-pulse {
-  animation: cyber-pulse-ring 2s ease-in-out infinite;
+  animation: cyber-pulse-ring 2.5s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .cyber-pulse { animation: none; }
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-/* Mono detail row used in logs, audit, etc. */
-.cyber-mono-row {
+/* ─── 3D Topology fallback ─── */
+.cyber-topology-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-0);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  min-height: 200px;
+}
+
+/* ─── Premium typography ─── */
+.cyber-display {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.cyber-mono {
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 0.8125rem;
-  line-height: 1.4;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
+.cyber-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.cyber-metric {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* ─── Severity bars (non-colour-only indicators) ─── */
+.cyber-severity-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cyber-severity-bar > span {
+  flex: 1;
+  height: 100%;
+}
+.cyber-severity-bar > span.filled {
+  background: currentColor;
+}
+.cyber-severity-bar > span:not(.filled) {
+  background: color-mix(in oklch, currentColor 20%, transparent);
+}
+
+/* ─── Card hover depth ─── */
+.cyber-card-hover {
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+.cyber-card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px -4px var(--glow-primary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cyber-card-hover:hover { transform: none; }
+}
+
+/* ─── Z-index system ─── */
+.cyber-z-sidebar { z-index: 40; }
+.cyber-z-header { z-index: 35; }
+.cyber-z-dropdown { z-index: 45; }
+.cyber-z-modal { z-index: 50; }
+.cyber-z-toast { z-index: 60; }
+.cyber-z-command-palette { z-index: 55; }

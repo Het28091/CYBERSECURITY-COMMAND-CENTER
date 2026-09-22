@@ -195,10 +195,12 @@ function crossCheck(cmd: ReadmeCommand, projectPath: string, discovery?: Discove
         conflict = `README references "${cmd.executable} run ${scriptName}" but package.json has no such script`;
       }
     } else if (cmd.args[0] === 'install' || cmd.args[0] === 'i' || cmd.args[0] === 'add' || cmd.args[0] === 'ci') {
-      // install commands are always "verified" if a manifest exists.
+      // install commands are NOT verified — `npm install <anything>` can execute
+      // postinstall scripts which is a known RCE vector. We only confirm the
+      // manifest exists, which is necessary but NOT sufficient for safety.
+      // Keep confidence at MEDIUM and verified=false so the UI warns the user.
       if (exists('package.json')) {
-        verified = true;
-        cmd.evidence.push('package.json (manifest present)');
+        cmd.evidence.push('package.json (manifest present — does NOT verify package safety)');
       } else {
         conflict = `${cmd.executable} install referenced in README, but no package.json found`;
       }
@@ -213,8 +215,9 @@ function crossCheck(cmd: ReadmeCommand, projectPath: string, discovery?: Discove
         conflict = `README references "${cmd.executable} ${target}" but file not found`;
       }
     } else if (cmd.args[0] === '-m') {
-      verified = true; // we cannot easily verify a module without running it
-      cmd.evidence.push('python -m module invocation');
+      // `python -m <module>` cannot be safely verified without running it.
+      // Per the master instruction, do NOT mark as verified. Confidence stays MEDIUM.
+      cmd.evidence.push('python -m module invocation (unverified — module not checked against dependencies)');
     }
   } else if (cmd.executable === 'docker' || cmd.executable === 'docker-compose') {
     const hasDockerfile = exists('Dockerfile');

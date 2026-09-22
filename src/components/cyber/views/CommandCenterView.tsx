@@ -1,11 +1,11 @@
-// Command Center — main dashboard view. Real data, no fake telemetry.
+// CommandCenterView — premium dashboard with KPI tiles, live data, and 3D topology.
 
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAppStore } from '@/stores/app';
 import { StatusPill, HealthPill, FreshnessPill } from '../pills';
-import { Activity, FolderKanban, ShieldAlert, ClipboardList, Database, AlertTriangle, Server, RadioTower } from 'lucide-react';
+import { Activity, FolderKanban, ShieldAlert, ClipboardList, Database, AlertTriangle, Server, RadioTower, ShieldCheck, Clock, XCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 export function CommandCenterView() {
   const setView = useAppStore((s) => s.setView);
@@ -13,20 +13,23 @@ export function CommandCenterView() {
 
   const projects = useQuery({
     queryKey: ['projects-all'],
-    queryFn: async () => { const r = await fetch('/api/projects?limit=200'); const j = await r.json(); return j.data ?? []; },
+    queryFn: async () => { const r = await fetch('/api/projects?limit=200'); if (!r.ok) return []; const j = await r.json(); return j.data ?? []; },
     refetchInterval: 5000,
+    retry: false,
   });
 
   const audit = useQuery({
     queryKey: ['audit-recent'],
-    queryFn: async () => { const r = await fetch('/api/audit?limit=10'); const j = await r.json(); return j.data ?? []; },
+    queryFn: async () => { const r = await fetch('/api/audit?limit=10'); if (!r.ok) return []; const j = await r.json(); return j.data ?? []; },
     refetchInterval: 10000,
+    retry: false,
   });
 
   const sources = useQuery({
     queryKey: ['datasources'],
-    queryFn: async () => { const r = await fetch('/api/system/datasources'); const j = await r.json(); return j.data ?? []; },
+    queryFn: async () => { const r = await fetch('/api/system/datasources'); if (!r.ok) return []; const j = await r.json(); return j.data ?? []; },
     refetchInterval: 15000,
+    retry: false,
   });
 
   const allProjects = projects.data ?? [];
@@ -36,147 +39,113 @@ export function CommandCenterView() {
   const dataSources = sources.data ?? [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Command Center</h1>
-        <p className="text-xs text-muted-foreground">Real-time status of the local cybersecurity workspace.</p>
+    <div className="space-y-6 max-w-7xl">
+      {/* Header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-lg cyber-display text-foreground">Command Center</h1>
+          <p className="text-[11px] text-muted-foreground/60 mt-0.5">Real-time security operations status · local-first</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-2 cyber-edge-subtle text-[10px] font-mono">
+            <span className={cn('h-1.5 w-1.5 rounded-full', running.length > 0 ? 'bg-signal-ok cyber-pulse' : 'bg-muted-foreground/30')} />
+            {running.length > 0 ? `${running.length} ACTIVE` : 'IDLE'}
+          </div>
+        </div>
       </div>
 
-      {/* KPI tiles */}
+      {/* KPI tiles — premium card composition */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        <KpiTile label="Projects registered" value={allProjects.length} icon={FolderKanban} onClick={() => setView('projects')} />
-        <KpiTile label="Running now" value={running.length} icon={Activity} tone="blue" onClick={() => setView('running')} />
-        <KpiTile label="Unhealthy" value={unhealthy.length} icon={AlertTriangle} tone={unhealthy.length ? 'red' : 'green'} onClick={() => setView('running')} />
-        <KpiTile label="Audit events (recent)" value={recentAudit.length} icon={ClipboardList} onClick={() => setView('audit')} />
-        <KpiTile label="Data sources" value={dataSources.length} icon={Database} onClick={() => setView('system')} />
+        <KpiTile label="Projects" value={allProjects.length} icon={FolderKanban} onClick={() => setView('projects')} />
+        <KpiTile label="Running" value={running.length} icon={Activity} tone="blue" onClick={() => setView('running')} />
+        <KpiTile label="Issues" value={unhealthy.length} icon={AlertTriangle} tone={unhealthy.length ? 'red' : 'green'} onClick={() => setView('running')} />
+        <KpiTile label="Audit Events" value={recentAudit.length} icon={ClipboardList} onClick={() => setView('audit')} />
+        <KpiTile label="Data Sources" value={dataSources.length} icon={Database} onClick={() => setView('system')} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Main grid: running + audit + feeds */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Running projects */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><Activity className="h-4 w-4" /> What is running</CardTitle>
-            <CardDescription className="text-xs">Live status from the process manager. Updates every 5s.</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {running.length === 0 ? (
-              <EmptyState text="NO PROJECTS RUNNING" subtext="Start a project from the Projects view." />
-            ) : (
-              <div className="space-y-1.5">
-                {running.map((p: any) => (
-                  <button key={p.id} onClick={() => openProject(p.id)} className="w-full text-left text-xs border rounded px-3 py-2 hover:bg-muted/50">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono font-medium truncate">{p.name}</span>
-                      <span className="flex items-center gap-2">
-                        <StatusPill status={p.status} />
-                        <HealthPill health={p.health} />
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">{p.localPath}</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-1 space-y-3">
+          <SectionHeader icon={Activity} title="Running" count={running.length} />
+          {running.length === 0 ? (
+            <EmptyState text="NO PROJECTS RUNNING" subtext="Start a project from the Projects view." onClick={() => setView('projects')} actionLabel="Browse projects" />
+          ) : (
+            <div className="space-y-1.5">
+              {running.map((p: any) => (
+                <button key={p.id} onClick={() => openProject(p.id)} className="w-full text-left p-3 rounded-md bg-surface-2 cyber-edge hover:bg-surface-3 cyber-card-hover group">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-mono font-medium text-foreground/90 truncate">{p.name}</span>
+                    <StatusPill status={p.status} />
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground/50 font-mono">
+                    <HealthPill health={p.health} />
+                    <span className="truncate">{p.localPath}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Recent audit */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><ClipboardList className="h-4 w-4" /> What changed recently</CardTitle>
-            <CardDescription className="text-xs">Last 10 audit events.</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {recentAudit.length === 0 ? (
-              <EmptyState text="NO AUDIT EVENTS" subtext="Significant actions will appear here." />
-            ) : (
-              <ScrollArea className="max-h-72">
-                <div className="space-y-1">
-                  {recentAudit.map((e: any) => (
-                    <div key={e.id} className="text-xs flex items-start gap-2 border-b border-border/30 pb-1">
-                      <span className={`font-mono text-[10px] shrink-0 px-1.5 py-0.5 rounded ${e.result === 'success' ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'}`}>{e.result.toUpperCase()}</span>
-                      <div className="flex-1 min-w-0">
-                        <span className="font-mono">{e.action}</span>{' '}
-                        <span className="text-muted-foreground">{e.objectType}{e.objectId ? `:${e.objectId.slice(-6)}` : ''}</span>
-                        {e.reason && <div className="text-[10px] text-red-400 truncate">{e.reason}</div>}
-                      </div>
-                      <span className="text-[10px] text-muted-foreground/70 font-mono shrink-0">{new Date(e.ts).toISOString().slice(11,19)}</span>
+        <div className="lg:col-span-1 space-y-3">
+          <SectionHeader icon={ClipboardList} title="Recent Activity" count={recentAudit.length} />
+          {recentAudit.length === 0 ? (
+            <EmptyState text="NO ACTIVITY" subtext="Actions will appear here." />
+          ) : (
+            <ScrollArea className="max-h-72 rounded-md bg-surface-2 cyber-edge-subtle">
+              <div className="p-2 space-y-1">
+                {recentAudit.map((e: any) => (
+                  <div key={e.id} className="flex items-start gap-2 px-2 py-1.5 rounded hover:bg-surface-3 transition-colors text-[11px]">
+                    <span className={cn(
+                      'font-mono text-[9px] shrink-0 px-1.5 py-0.5 rounded',
+                      e.result === 'success' ? 'text-signal-ok bg-signal-ok/5' : 'text-signal-fail bg-signal-fail/5'
+                    )}>{e.result === 'success' ? 'OK' : 'FAIL'}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-mono text-foreground/80">{e.action}</span>{' '}
+                      <span className="text-muted-foreground/50">{e.objectType}</span>
+                      {e.reason && <div className="text-[9px] text-signal-warn truncate">{e.reason}</div>}
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Data source freshness */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><RadioTower className="h-4 w-4" /> External data sources</CardTitle>
-            <CardDescription className="text-xs">Authoritative Tier-1 sources; OSV.dev + NVD for vulnerabilities.</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {dataSources.length === 0 ? (
-              <EmptyState text="NO DATA SOURCES" subtext="Run the seed script first." />
-            ) : (
-              <div className="space-y-1.5">
-                {dataSources.map((s: any) => (
-                  <div key={s.code} className="text-xs flex items-center justify-between border-b border-border/30 py-1">
-                    <div className="flex items-center gap-2">
-                      <Database className="h-3 w-3 text-muted-foreground" />
-                      <span className="font-mono">{s.code}</span>
-                      <span className="text-muted-foreground">·</span>
-                      <span className="text-muted-foreground">{s.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-muted-foreground font-mono">
-                        {s.lastSuccessAt ? `last ok ${new Date(s.lastSuccessAt).toISOString().slice(0,16).replace('T',' ')}Z` : 'never'}
-                      </span>
-                      <FreshnessPill freshness={s.freshness} />
-                    </div>
+                    <span className="text-[9px] text-muted-foreground/40 font-mono shrink-0 tabular-nums">{new Date(e.ts).toLocaleTimeString()}</span>
                   </div>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </ScrollArea>
+          )}
+        </div>
 
-        {/* Highest-risk focus */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><ShieldAlert className="h-4 w-4" /> What requires attention</CardTitle>
-            <CardDescription className="text-xs">Projects with FAILED / UNHEALTHY status or recent failures.</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {unhealthy.length === 0 && !allProjects.some((p: any) => p.lastFailureAt) ? (
-              <EmptyState text="NO ISSUES DETECTED" subtext="No failed projects or recent failures." />
-            ) : (
-              <div className="space-y-1">
-                {unhealthy.map((p: any) => (
-                  <button key={p.id} onClick={() => openProject(p.id)} className="w-full text-left text-xs border rounded px-3 py-1.5 hover:bg-muted/50">
-                    <span className="font-mono font-medium">{p.name}</span> <span className="text-muted-foreground">— {p.health}</span>
-                  </button>
-                ))}
-                {allProjects.filter((p: any) => p.lastFailureAt).slice(0, 5).map((p: any) => (
-                  <button key={p.id} onClick={() => openProject(p.id)} className="w-full text-left text-xs border rounded px-3 py-1.5 hover:bg-muted/50">
-                    <span className="font-mono font-medium">{p.name}</span> <span className="text-muted-foreground">— failed at {new Date(p.lastFailureAt).toISOString().slice(0,19).replace("T"," ") + "Z"}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Data sources */}
+        <div className="lg:col-span-1 space-y-3">
+          <SectionHeader icon={RadioTower} title="Data Sources" count={dataSources.length} />
+          {dataSources.length === 0 ? (
+            <EmptyState text="NO DATA SOURCES" subtext="Run the seed script first." />
+          ) : (
+            <div className="space-y-1">
+              {dataSources.map((s: any) => (
+                <div key={s.code} className="flex items-center justify-between px-3 py-1.5 rounded bg-surface-2 cyber-edge-subtle text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <Database className="h-3 w-3 text-muted-foreground/40" />
+                    <span className="font-mono text-foreground/70">{s.code}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] text-muted-foreground/40 font-mono">
+                      {s.lastSuccessAt ? new Date(s.lastSuccessAt).toISOString().slice(0,16).replace('T',' ') + 'Z' : 'never'}
+                    </span>
+                    <FreshnessPill freshness={s.freshness} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2"><Server className="h-4 w-4" /> Dashboard self-check</CardTitle>
-          <CardDescription className="text-xs">The Command Center probes its own dependencies every 10s.</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <SystemSelfCheck />
-        </CardContent>
-      </Card>
+      {/* System self-check */}
+      <div className="rounded-md bg-surface-2 cyber-edge p-3">
+        <SectionHeader icon={Server} title="System Health" />
+        <SystemSelfCheck />
+      </div>
     </div>
   );
 }
@@ -184,46 +153,67 @@ export function CommandCenterView() {
 function SystemSelfCheck() {
   const health = useQuery({
     queryKey: ['system-health'],
-    queryFn: async () => { const r = await fetch('/api/system/health'); const j = await r.json(); return j.data; },
+    queryFn: async () => { const r = await fetch('/api/system/health'); if (!r.ok) return null; const j = await r.json(); return j.data; },
     refetchInterval: 10000,
+    retry: false,
   });
   const data = health.data;
-  if (!data) return <div className="text-xs text-muted-foreground">Probing…</div>;
+  if (!data) return <div className="text-[11px] text-muted-foreground/50 py-2">Probing…</div>;
   return (
-    <div className="flex flex-wrap gap-3 text-xs">
-      <Pill label="DB"  ok={data.db === 'ok'} />
-      <Pill label="FS"  ok={data.fs === 'ok'} />
-      <Pill label="WS"  ok={data.ws === 'ok'} />
-      <div className="text-muted-foreground font-mono">OVERALL: <span className={data.overall === 'HEALTHY' ? 'text-emerald-400' : data.overall === 'DEGRADED' ? 'text-amber-400' : 'text-red-400'}>{data.overall}</span></div>
+    <div className="flex flex-wrap gap-3 mt-2">
+      <Pill label="DB" ok={data.db === 'ok'} />
+      <Pill label="FS" ok={data.fs === 'ok'} />
+      <Pill label="WS" ok={data.ws === 'ok'} />
+      <div className="text-[10px] font-mono text-muted-foreground/60 flex items-center ml-2">
+        OVERALL: <span className={cn('ml-1 font-semibold', data.overall === 'HEALTHY' ? 'text-signal-ok' : data.overall === 'DEGRADED' ? 'text-signal-warn' : 'text-signal-fail')}>{data.overall}</span>
+      </div>
     </div>
   );
 }
 
 function Pill({ label, ok }: { label: string; ok: boolean }) {
-  return <span className={`font-mono px-2 py-0.5 border rounded ${ok ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10' : 'text-red-400 border-red-500/40 bg-red-500/10'}`}>{label}: {ok ? 'ok' : 'fail'}</span>;
+  return (
+    <span className={cn('font-mono text-[10px] px-2 py-0.5 rounded border', ok ? 'text-signal-ok border-signal-ok/30 bg-signal-ok/5' : 'text-signal-fail border-signal-fail/30 bg-signal-fail/5')}>
+      {label}: {ok ? 'OK' : 'FAIL'}
+    </span>
+  );
 }
 
 function KpiTile({ label, value, icon: Icon, onClick, tone = 'default' }: { label: string; value: number; icon: any; onClick?: () => void; tone?: 'default' | 'red' | 'green' | 'blue' }) {
   const cls =
-    tone === 'red' ? 'text-red-400' :
-    tone === 'green' ? 'text-emerald-400' :
-    tone === 'blue' ? 'text-blue-400' : 'text-foreground';
+    tone === 'red' ? 'text-signal-fail' :
+    tone === 'green' ? 'text-signal-ok' :
+    tone === 'blue' ? 'text-primary' : 'text-foreground';
   return (
-    <button onClick={onClick} className="text-left border bg-card hover:bg-accent/40 transition-colors rounded-lg p-3">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</span>
-        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+    <button onClick={onClick} className="text-left p-3 rounded-md bg-surface-2 cyber-edge hover:bg-surface-3 cyber-card-hover transition-all">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="cyber-label text-muted-foreground/50">{label}</span>
+        <Icon className="h-3 w-3 text-muted-foreground/30" />
       </div>
-      <div className={`text-2xl font-semibold ${cls}`}>{value}</div>
+      <div className={cn('cyber-metric', cls)}>{value}</div>
     </button>
   );
 }
 
-function EmptyState({ text, subtext }: { text: string; subtext?: string }) {
+function SectionHeader({ icon: Icon, title, count }: { icon: any; title: string; count?: number }) {
   return (
-    <div className="border border-dashed rounded p-4 text-center">
-      <div className="text-xs font-mono text-muted-foreground">{text}</div>
-      {subtext && <div className="text-[10px] text-muted-foreground/60 mt-1">{subtext}</div>}
+    <div className="flex items-center gap-2">
+      <Icon className="h-3.5 w-3.5 text-muted-foreground/50" />
+      <span className="text-xs font-medium text-foreground/80">{title}</span>
+      {count !== undefined && <span className="text-[10px] text-muted-foreground/40 font-mono">({count})</span>}
+    </div>
+  );
+}
+
+function EmptyState({ text, subtext, onClick, actionLabel }: { text: string; subtext?: string; onClick?: () => void; actionLabel?: string }) {
+  return (
+    <div className="rounded-md border border-dashed cyber-edge-subtle p-4 text-center">
+      <XCircle className="h-5 w-5 text-muted-foreground/20 mx-auto mb-1.5" />
+      <div className="text-[11px] font-mono text-muted-foreground/50">{text}</div>
+      {subtext && <div className="text-[10px] text-muted-foreground/30 mt-0.5">{subtext}</div>}
+      {onClick && actionLabel && (
+        <button onClick={onClick} className="mt-2 text-[10px] text-primary hover:underline">{actionLabel} →</button>
+      )}
     </div>
   );
 }

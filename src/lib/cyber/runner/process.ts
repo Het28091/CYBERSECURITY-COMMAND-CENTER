@@ -1,10 +1,17 @@
 // Process manager.
 // Spawns tracked child processes, captures stdout/stderr, applies timeouts,
 // handles graceful + forced shutdown, and emits events for the WS service.
+//
+// GAP-005 fix: spawn with `detached: true` so a process group is created.
+// Kill via `process.kill(-proc.pid, signal)` to signal the entire process
+// group, which catches grandchild processes (e.g. `npm run dev` → `next dev`).
+// GAP-008 fix: project env vars are loaded at spawn time, with PATH and
+// other executable-substitution variables removed for safety.
 
 import { spawn, ChildProcess } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import * as path from 'node:path';
+import * as fs from 'node:fs';
 import http from 'node:http';
 import { db } from '@/lib/db';
 import { redact } from '@/lib/cyber/security/redact';
@@ -24,6 +31,27 @@ export interface ProcEvent {
   ts: string;
 }
 
+// Variables that, if overridden by project env, would let an attacker
+// substitute a malicious binary or library. NEVER allow project env to set them.
+const DANGEROUS_ENV_VARS = new Set([
+  'PATH',                       // executable substitution
+  'LD_PRELOAD',                 // shared library injection
+  'LD_LIBRARY_PATH',
+  'DYLD_LIBRARY_PATH',          // macOS
+  'DYLD_INSERT_LIBRARIES',
+  'NODE_OPTIONS',              // can inject node flags like --require
+  'PYTHONPATH',                 // python module search path
+  'PYTHONSTARTUP',
+  'PERL5OPT',
+  'RUBYOPT',
+  'JAVA_TOOL_OPTIONS',
+  'GIT_CONFIG',                 // git config override
+  'GIT_SSL_NO_VERIFY',
+  'npm_config_cache',           // npm cache override
+  'NODE_EXTRA_CA_CERTS',
+  'ELECTRON_RUN_AS_NODE',
+]);
+
 class ProcessManager extends EventEmitter {
   private tracked: Map<string, { proc: ChildProcess; executionId: string; projectId: string; killed: boolean }> = new Map();
 
@@ -41,12 +69,33 @@ class ProcessManager extends EventEmitter {
       throw new Error(`Command blocked: ${policyResult.reason}`);
     }
 
-    // Spawn with argv (never shell string).
+    // Build the spawn env: start from process.env (sanitized), apply project
+    // env vars but STRIP dangerous ones (PATH, LD_PRELOAD, etc.).
+    const env: Record<string, string> = {};
+    for (const [k, v] of Object.entries(process.env)) {
+      if (typeof v === 'string') env[k] = v;
+    }
+    for (const [k, v] of Object.entries(cmd.env ?? {})) {
+      if (DANGEROUS_ENV_VARS.has(k)) {
+        // Log + skip — never let the project override these.
+        this.emitEvent({
+          type: 'log', projectId, executionId, stream: 'event',
+          line: `[cybercc] refusing to set env var "${k}" (executable substitution protection)`,
+          ts: new Date().toISOString(),
+        });
+        continue;
+      }
+      env[k] = redact(v);
+    }
+
+    // Spawn with argv (never shell string). Use detached: true so a new
+    // process group is created — we can then signal the whole group on stop.
     const proc = spawn(cmd.executable, cmd.args, {
       cwd: cmd.cwd,
-      env: { ...process.env, ...cmd.env },
+      env,
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
+      detached: true, // ← GAP-005 fix: creates a new process group
     });
 
     if (!proc.pid) {
@@ -84,6 +133,15 @@ class ProcessManager extends EventEmitter {
         reason: signal ? `signal ${signal}` : undefined,
         ts: new Date().toISOString(),
       });
+      // On exit, also try to kill any lingering grandchild processes in the
+      // process group (defensive — the group signal in `stop` should have
+      // already done this, but if the process died on its own we want to
+      // clean up its children too).
+      try {
+        if (proc.pid) process.kill(-proc.pid, 0); // existence check
+        // If the group still exists, force-kill it.
+        try { process.kill(-proc.pid, 'SIGKILL'); } catch { /* already gone */ }
+      } catch { /* group already gone — good */ }
       // Update execution record asynchronously.
       db.projectExecution.update({
         where: { id: executionId },
@@ -107,18 +165,20 @@ class ProcessManager extends EventEmitter {
     return { pid: proc.pid, executionId };
   }
 
-  /** Graceful stop: SIGTERM, then SIGKILL after a grace period. */
+  /** Graceful stop: SIGTERM the entire process group, then SIGKILL. */
   async stop(projectId: string, reason?: string, graceMs = 3000): Promise<void> {
     for (const [pidStr, info] of this.tracked.entries()) {
       if (info.projectId !== projectId) continue;
       info.killed = true;
-      try {
-        info.proc.kill('SIGTERM');
-      } catch { /* ignore */ }
+      // GAP-005 fix: signal the entire process group so grandchildren die too.
+      try { process.kill(-info.proc.pid!, 'SIGTERM'); } catch { /* try per-proc fallback */ try { info.proc.kill('SIGTERM'); } catch {} }
       setTimeout(() => {
-        if (!info.proc.killed) {
-          try { info.proc.kill('SIGKILL'); } catch { /* ignore */ }
-        }
+        try {
+          if (!info.proc.killed) {
+            try { process.kill(-info.proc.pid!, 'SIGKILL'); } catch {}
+            try { info.proc.kill('SIGKILL'); } catch {}
+          }
+        } catch { /* ignore */ }
       }, graceMs);
       this.emitEvent({
         type: 'status', projectId, executionId: info.executionId,
@@ -132,7 +192,8 @@ class ProcessManager extends EventEmitter {
     for (const [, info] of this.tracked.entries()) {
       if (info.projectId === projectId) {
         info.killed = true;
-        try { info.proc.kill('SIGKILL'); } catch { /* ignore */ }
+        try { process.kill(-info.proc.pid!, 'SIGKILL'); } catch {}
+        try { info.proc.kill('SIGKILL'); } catch {}
       }
     }
   }

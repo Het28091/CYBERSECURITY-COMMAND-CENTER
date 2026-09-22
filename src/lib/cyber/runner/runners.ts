@@ -1,6 +1,10 @@
 // Project Runner registry.
 // Each runner knows how to (a) detect whether it applies to a project, and
 // (b) build a resolved command for a given action (run/stop/restart).
+//
+// GAP-008 fix: runners now load `.env.example`-declared env vars into the
+// spawn env at run time. The process manager strips dangerous vars
+// (PATH, LD_PRELOAD, etc.) before the spawn.
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -73,12 +77,12 @@ function fromReadme(cmd: ReadmeCommand | undefined, cwd: string, timeoutMs: numb
   };
 }
 
-function fromManifest(exe: string, args: string[], cwd: string, evidence: string[], display: string, timeoutMs: number): ResolvedCommand {
+function fromManifest(exe: string, args: string[], cwd: string, evidence: string[], display: string, timeoutMs: number, env?: Record<string,string>): ResolvedCommand {
   return {
     executable: exe,
     args,
     cwd,
-    env: {},
+    env: env ?? {},
     timeoutMs,
     source: 'manifest',
     confidence: 'HIGH',
@@ -88,6 +92,40 @@ function fromManifest(exe: string, args: string[], cwd: string, evidence: string
 }
 
 const DEFAULT_TIMEOUT = 60000;
+
+/**
+ * Load env vars from `.env.example` in the project. Returns a Record
+ * mapping var name → value. Placeholder values are kept as-is (the user
+ * can fill in real values in their own .env file at run time, but for
+ * dry-run / discovery we keep the placeholder so the project can start).
+ *
+ * Returns an empty record if `.env.example` doesn't exist or is empty.
+ */
+function loadEnvExample(projectPath: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const candidates = ['.env', '.env.local', '.env.example'];
+  for (const name of candidates) {
+    const full = path.join(projectPath, name);
+    if (!fs.existsSync(full)) continue;
+    try {
+      const content = fs.readFileSync(full, 'utf8');
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const m = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+        if (m) {
+          let v = m[2].trim();
+          // Strip surrounding quotes
+          if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+            v = v.slice(1, -1);
+          }
+          out[m[1]] = v;
+        }
+      }
+    } catch { /* ignore */ }
+  }
+  return out;
+}
 
 // ─── Node runner ─────────────────────────────────────────────────────────────
 
@@ -104,6 +142,7 @@ export const nodeRunner: ProjectRunner = {
     const pm = d.packageManager === 'pnpm' ? 'pnpm' :
                d.packageManager === 'yarn' ? 'yarn' :
                d.packageManager === 'bun' ? 'bun' : 'npm';
+    const env = loadEnvExample(projectPath); // ← GAP-008 fix
     // Try manifest first.
     try {
       const pkgPath = path.join(projectPath, 'package.json');
@@ -117,7 +156,7 @@ export const nodeRunner: ProjectRunner = {
           scripts.start ?? scripts.dev;
         if (target) {
           return fromManifest(pm, ['run', action === 'run' ? 'start' : action], projectPath,
-            [`package.json:scripts.${action === 'run' ? 'start' : action}`], `${pm} run ${action === 'run' ? 'start' : action}`, DEFAULT_TIMEOUT);
+            [`package.json:scripts.${action === 'run' ? 'start' : action}`], `${pm} run ${action === 'run' ? 'start' : action}`, DEFAULT_TIMEOUT, env);
         }
       }
     } catch { /* ignore */ }
@@ -139,11 +178,12 @@ export const pythonRunner: ProjectRunner = {
   },
   buildCommand(action, projectPath, d, readme) {
     if (!pythonRunner.supported) return null;
+    const env = loadEnvExample(projectPath); // ← GAP-008 fix
     if (action === 'dev' || action === 'run') {
       const entry = d.entryPoint;
       if (entry && entry.startsWith('python ')) {
         return fromManifest('python3', [entry.replace(/^python(?:3)?\s+/, '')], projectPath,
-          ['pyproject.toml/requirements.txt:entryPoint'], entry, DEFAULT_TIMEOUT);
+          ['pyproject.toml/requirements.txt:entryPoint'], entry, DEFAULT_TIMEOUT, env);
       }
       // Try README.
       const readmeCmd = pickReadme(readme, 'run');
@@ -153,7 +193,7 @@ export const pythonRunner: ProjectRunner = {
       const readmeCmd = pickReadme(readme, 'test');
       if (readmeCmd) return fromReadme(readmeCmd, projectPath, DEFAULT_TIMEOUT);
       if (fs.existsSync(path.join(projectPath, 'pytest.ini')) || fs.existsSync(path.join(projectPath, 'pyproject.toml'))) {
-        return fromManifest('pytest', [], projectPath, ['pytest.ini or pyproject.toml'], 'pytest', DEFAULT_TIMEOUT);
+        return fromManifest('pytest', [], projectPath, ['pytest.ini or pyproject.toml'], 'pytest', DEFAULT_TIMEOUT, env);
       }
     }
     if (action === 'build') {

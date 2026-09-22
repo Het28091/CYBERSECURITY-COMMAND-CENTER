@@ -5,10 +5,14 @@ import { ok, err, parseBody } from '@/lib/cyber/api';
 import { getSettings, updateSettings } from '@/lib/cyber/settings';
 import { record } from '@/lib/cyber/audit/record';
 import { z } from 'zod';
+import { requireAuth } from '@/lib/cyber/auth';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const __auth = await requireAuth(req, 'admin');
+  if (!__auth.ok) return __auth.response!;
+
   const s = await getSettings();
   return ok({ ...s, updatedAt: s.updatedAt.toISOString() });
 }
@@ -24,6 +28,8 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest) {
+  const __auth = await requireAuth(req, 'admin');
+  if (!__auth.ok) return __auth.response!;
   const body = await req.json().catch(() => null);
   const parsed = parseBody(patchSchema, body);
   if (!parsed.ok) return parsed.error;

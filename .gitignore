@@ -23,32 +23,67 @@ node_modules
 # misc
 .DS_Store
 *.pem
+*.p12
+*.pfx
+*.key
+*.keystore
 
-# debug
+# debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (NEVER commit — contains DB URL and any real secrets)
+.env
+.env.*
+!.env.example
 
 # vercel
 .vercel
 
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local / IDE / agent
 local-*
 .claude
 .z-ai-config
+.claude/
+.zscripts/dev.pid
+.zscripts/dev.log
+
+# Skills directory (per-platform)
+/skills/
+
+# Upload directory (user-supplied files — never commit)
+/upload/
+
+# Runtime logs and database
 *.log
 dev.log
 dev.out.log
-test
-prompt
-
 server.log
-# Skills directory
-/skills/
+prod.log
+/db/*.db
+/db/*.db-journal
+/db/*.db-wal
+/db/*.db-shm
+
+# Tool-results and intermediate artifacts
+/tool-results/
+
+# Cache and runtime artifacts
+/cache/
+/artifacts/tests/
+/artifacts/reports/
+/artifacts/*.png
+/cyber-center-data/
+
+# Local Next.js dev metadata
+.next/
+
+# Build outputs
+build/
+dist/

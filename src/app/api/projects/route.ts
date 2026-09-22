@@ -7,6 +7,7 @@ import { ok, err, parseBody, jParse } from '@/lib/cyber/api';
 import { checkPath } from '@/lib/cyber/security/path';
 import { getSettings } from '@/lib/cyber/settings';
 import { record } from '@/lib/cyber/audit/record';
+import { requireAuth } from '@/lib/cyber/auth';
 import { z } from 'zod';
 import type { ProjectRow } from '@/lib/cyber/types';
 import { redact } from '@/lib/cyber/security/redact';
@@ -42,6 +43,8 @@ function row(row: any): ProjectRow {
 }
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req, 'read');
+  if (!auth.ok) return auth.response!;
   const url = new URL(req.url);
   const q = url.searchParams.get('q')?.toLowerCase() ?? '';
   const status = url.searchParams.get('status') ?? '';
@@ -66,6 +69,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req, 'create');
+  if (!auth.ok) return auth.response!;
   const body = await req.json().catch(() => null);
   const parsed = parseBody(createSchema, body);
   if (!parsed.ok) return parsed.error;

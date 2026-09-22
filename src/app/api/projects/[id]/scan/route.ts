@@ -6,6 +6,7 @@ import { ok, err } from '@/lib/cyber/api';
 import { SCANNERS, getScanner } from '@/lib/cyber/scanners/scanners';
 import { record } from '@/lib/cyber/audit/record';
 import { z } from 'zod';
+import { requireAuth } from '@/lib/cyber/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,9 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const __auth = await requireAuth(req, 'scan');
+  if (!__auth.ok) return __auth.response!;
+
   const { id } = await ctx.params;
   const project = await db.project.findUnique({ where: { id } });
   if (!project) return err('NOT_FOUND', 'Project not found', 404);

@@ -1,109 +1,73 @@
 # CHANGELOG.md
 
-## [0.1.0] — 2026-09-08
+## [0.2.0] — 2026-09-09 — Spiral 18: Independent Audit + Gap Remediation
+
+### Audit
+- Retracted the previous "all spirals complete" declaration after an independent audit.
+- Built `docs/REQUIREMENTS_TRACEABILITY.md` mapping every requirement to implementation + test + evidence + status.
+- Built `docs/FINAL_GAP_ANALYSIS.md` with 28 gaps classified P0–P3.
+- Built `docs/RELEASE_BLOCKERS.md` with 13 release blockers (6 P0 + 7 P1).
+- Built `docs/FINAL_AUDIT_REPORT.md` with overall status CONDITIONALLY_READY.
+- Ran new adversarial test suite (`scripts/adversarial-test.ts`, 19 cases).
+- Ran production build (`bun run build` + standalone server) — verified working.
+- Ran backup/restore test (`scripts/backup-test.ts`, 7 cases pass).
+- Ran performance test (105 projects + 5000 findings — acceptable).
+
+### P0 fixes (5 of 6 resolved)
+- **GAP-001**: Secondary AI Verification — new `src/lib/cyber/verification/engine.ts` with full workflow (Primary → Evidence → Secondary LLM → Compare → Store). State machine: UNVERIFIED → VERIFYING → VERIFIED | REJECTED | CONFLICT | FAILED | STALE | UNKNOWN. Timeout never becomes VERIFIED. New `VerificationRequest` Prisma model. New endpoints: `POST /api/verify`, `GET /api/verify/list`, `POST /api/verify/entry/{kind}/{id}`. Verified by real LLM dispatch (AGREE + CONFLICT cases).
+- **GAP-002**: Block-list tightening — added `rm -rf /<path>` (any path), `curl -o /etc/...`, `wget -O /etc/...`, `crontab|at`, `PATH=` patterns. Adversarial tests now 19/19 PASS.
+- **GAP-003**: Seeded knowledge — new `scripts/reset-verification.ts` resets 100 entries from VERIFIED to UNVERIFIED. Seed script updated. New `POST /api/verify/entry/{kind}/{id}` performs REAL verification via HTTP HEAD/GET to the official URL.
+- **GAP-004**: Removed unjustified auto-verification of `npm install <anything>` and `python -m <anything>`.
+- **GAP-005**: Grandchild process tracking — spawn with `detached: true`; stop uses `process.kill(-proc.pid, signal)` to signal the entire process group.
+
+### P0 partial (1 of 6)
+- **GAP-006**: Threat Intelligence — new `ThreatFeed` + `ThreatIndicator` Prisma models, new `src/lib/cyber/threatintel/feeds.ts` with 3 adapters. `osv-watchlist` works (867 real indicators). `cisa-kev` returns HTTP 403 from sandbox. `abuse-ch-threatfox` returns HTTP 401. Architecture is extensible.
+
+### P1 fixes (4 of 7 resolved)
+- **GAP-008**: `.env.example` env vars loaded into spawn env at run time. Process manager STRIPS dangerous env vars (PATH, LD_PRELOAD, LD_LIBRARY_PATH, DYLD_*, NODE_OPTIONS, PYTHONPATH, PERL5OPT, RUBYOPT, JAVA_TOOL_OPTIONS, GIT_CONFIG, GIT_SSL_NO_VERIFY, npm_config_cache, NODE_EXTRA_CA_CERTS, ELECTRON_RUN_AS_NODE).
+- **GAP-009**: CVE caching — disk cache at `cache/cve/` with TTL (1h OSV, 6h NVD). `freshness` from cache age. Stale-cache fallback on network failure.
+- **GAP-010**: Dependency scanner now real SCA — queries OSV.dev per top-level dependency. Findings have real severity from OSV.
+- **GAP-012**: Data export endpoints — `GET /api/export/{audit|findings|projects}?format=csv|json|md`. Redaction applied.
+- **GAP-019**: NVD operator-precedence bug fixed.
+
+### P1 partial (3 of 7)
+- **GAP-007**: Authentication not implemented — documented as "local-first single-user" scope. NextAuth wiring deferred to Spiral 20.
+- **GAP-011**: `checkCommand` allow-list uses basename only — defense-in-depth, currently mitigated. Fix in Spiral 21.
+- **GAP-013**: Compliance `kind` not prominent in UI — cosmetic; existing UI acceptable.
+
+### Tests
+- `scripts/security-test.ts` — 13/13 PASS
+- `scripts/adversarial-test.ts` — 19/19 PASS (was 18/19 before block-list fix)
+- `scripts/redact-test.ts` — 7/7 PASS
+- `scripts/backup-test.ts` — 7/7 PASS (new)
+- `bun run lint` — 0 errors
+- `bun run build` — success; standalone server returns 200
+
+### Status
+- **CONDITIONALLY_READY** (was incorrectly declared PRODUCTION_READY in the previous session).
+- 9 of 13 release blockers resolved.
+- 4 residual blockers (1 environmental, 1 defense-in-depth, 1 documented limitation, 1 cosmetic).
+- Next: Spiral 19 — UI integration + bulk verification.
+
+---
+
+## [0.1.0] — 2026-09-08 — Spirals 0-17 (retracted)
+
+The previous "all spirals complete" declaration is retracted. See Spiral 18 audit for the gap analysis.
 
 ### Spiral 0 — Project Discovery and Requirements
-- Inspected workspace (Linux x86_64, Node 24, Python 3.12, Java 21, no
-  Docker/Go/Rust/Ruby).
-- Authored 22 documentation files + 8 persistent context files.
-- Spiral 0 report (`iterations/spiral-00-discovery.md`).
-
 ### Spiral 1 — Application Foundation
-- Prisma schema (17 models), pushed to SQLite.
-- Cybersecurity design tokens (severity + signal palette, cyber-grid
-  background).
-- Sidebar (18 nav items in 4 groups), top bar, command palette (⌘K),
-  global search (⌘/).
-- Zustand store + TanStack Query.
-
 ### Spiral 2 — Project Registry
-- POST/GET/PATCH/DELETE `/api/projects` with path verification,
-  allowed-root check, symlink detection, duplicate rejection.
-- Status machine: REGISTERED → DISCOVERED → VERIFIED → RUNNING →
-  STOPPED / FAILED.
-- Audit event for every state change.
-- ProjectsView grid + ProjectDetailView with 7 tabs.
-
 ### Spiral 3 — Project Discovery Engine
-- Parses package.json, pyproject.toml, requirements.txt, go.mod,
-  Cargo.toml, Gemfile, composer.json, Dockerfile, compose, .env.example,
-  Makefile.
-- Every non-UNKNOWN field backed by evidence.
-- Conflicts recorded, not silently resolved.
-
 ### Spiral 4 — README Intelligence Engine
-- Parses README.md/.rst/.txt; extracts install/build/run/test/dev/docker
-  commands.
-- Cross-checks against package.json scripts, file existence, Makefile
-  targets, Dockerfile presence.
-- Confidence HIGH if cross-check passes, LOW if conflict, MEDIUM
-  otherwise.
-
 ### Spiral 5 — Safe Project Runner + WS Mini-Service
-- 6 runners (Node, Python, Go, Rust, Docker, Shell) with `supported`
-  flag.
-- Spawn with argv (shell: false); per-command timeout; SIGTERM + SIGKILL.
-- `mini-services/proc-ws` on port 3003 with `bun --hot` and socket.io.
-- Browser subscribes via `io('/', { query: { XTransformPort: '3003' } })`.
-
 ### Spiral 6 — Process Management UI
-- RunningProjectsView with live status, stop/restart/health actions.
-
 ### Spiral 7 — Health Checks & Logging
-- Process/port/HTTP probe.
-- Real-time log streaming via WS.
-- 14 secret-redaction patterns applied before persistence and emit.
-
 ### Spiral 8 — Cybersecurity Knowledge Center
-- 50 tools seeded (DAST, SAST, container, SBOM, IaC, K8s, secrets,
-  mobile, SIEM, forensics, malware, network, OSINT, threat intel,
-  identity, PKI, RE).
-- ToolsView with search + category filter.
-
 ### Spiral 9 — CVE & Vulnerability Intelligence
-- OSV.dev (packages) + NVD (CVE IDs).
-- DataSource freshness tracking.
-- CvesView + VulnerabilitiesView.
-
 ### Spiral 10 — OWASP Knowledge System
-- 30 entries: Web 2021 (A01-A10), API 2023 (API1-API10), LLM 2025
-  (LLM01-LLM10).
-- Each entry links to the official OWASP URL.
-
 ### Spiral 11 — AI & LLM Security Center
-- 15 entries: prompt injection, indirect prompt injection, jailbreak,
-  data leakage, output handling, tool use, agents, RAG, supply chain,
-  data poisoning, model theft, adversarial inputs, DoS, identity,
-  oversight.
-
 ### Spiral 12 — Scanner Plugin Architecture
-- Dependency, Secret, Configuration scanners.
-- `POST /api/projects/[id]/scan` with `{ scanners: string[] }`.
-- `FindingsView` aggregates findings across all projects.
-
 ### Spiral 15 — Compliance-Readiness System
-- GDPR (10), NIS2 (5), CRA (4), DORA (5), EU AI Act (7) — 31 controls.
-- Per-control applicability + status editors.
-- Compliance disclaimer prominent on every compliance page.
-
 ### Spiral 16 — Security Hardening
-- Append-only audit trail.
-- 14 secret-redaction patterns.
-- scripts/security-test.ts (13 cases pass).
-- scripts/redact-test.ts (7 cases pass).
-
-### Spiral 17 — Production Readiness
-- Agent-browser self-verification.
-- Lint passes (0 errors).
-- All 30 acceptance steps from master instruction section 95
-  demonstrated with evidence.
-
-### Known Limits (clearly labelled in UI)
-- NextAuth dependencies present but not activated (single-user
-  local-first scope).
-- Direct threat-intel feed not integrated (ThreatIntelView is a
-  documented placeholder).
-- AI Agent Orchestration dispatch is read-only (AiAgentsView shows the
-  9 roles; all roles played by the main agent in this session).
-- Secondary AI Verification protocol documented and states applied, but
-  no separate second-LLM dispatch.
+### Spiral 17 — Production Readiness (declaration retracted)

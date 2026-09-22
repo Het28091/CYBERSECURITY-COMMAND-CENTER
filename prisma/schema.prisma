@@ -286,3 +286,110 @@ model DataSource {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
+
+// ─── Session (server-side revocation) ───────────────────────────────────────
+// DB-backed session records. Each login creates a row; logout revokes it.
+// getSession checks both the HMAC signature AND the DB for a non-revoked,
+// non-expired row. This fixes F-001: stolen cookies become unusable after
+// logout because the DB row is marked revoked.
+
+model Session {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique              // SHA-256 of the signed cookie value
+  userId      String                          // "admin" for local-only
+  role        String                          // ADMIN | OPERATOR | VIEWER
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  lastUsedAt  DateTime? @updatedAt
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── Verification ─────────────────────────────────────────────────────────────
+// Secondary AI Verification records (master instruction section 49-54).
+
+model VerificationRequest {
+  id                  String   @id @default(cuid())
+  claimText           String                       // the claim being verified
+  evidence            String   @default("[]")      // JSON array of evidence
+  sources             String   @default("[]")      // JSON array of source URLs
+  primaryAssessment   String
+  primaryConfidence   String                       // HIGH|MEDIUM|LOW
+  state               String   @default("UNVERIFIED") // UNVERIFIED|VERIFYING|VERIFIED|REJECTED|CONFLICT|FAILED|STALE|UNKNOWN
+  secondaryAssessment String?
+  agreement           Boolean?
+  disagreementLevel   String?                       // MINOR|MATERIAL|CRITICAL
+  reason              String?
+  primaryAt           DateTime @default(now())
+  secondaryAt        DateTime?
+  durationMs          Int?
+  // Optional links back to the thing being verified
+  projectId           String?
+  refType             String?                       // cve|readme|discovery|claim
+  refId               String?
+  createdAt           DateTime @default(now())
+
+  @@index([state])
+  @@index([refType])
+  @@index([createdAt])
+}
+
+// ─── Threat Intelligence ──────────────────────────────────────────────────────
+// Real threat-intelligence feed system (master instruction section 7-8).
+
+model ThreatFeed {
+  id              String   @id @default(cuid())
+  code            String   @unique              // e.g. cisa-kev
+  name            String
+  description     String
+  endpoint        String                          // URL to fetch
+  format          String   @default("json")     // json|stix|csv
+  trustTier       Int      @default(1)
+  enabled         Boolean  @default(true)
+  lastSuccessAt   DateTime?
+  lastFailureAt   DateTime?
+  lastFailureReason String?
+  freshness       String   @default("unknown")
+  indicatorCount  Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  indicators      ThreatIndicator[]
+}
+
+model ThreatIndicator {
+  id              String   @id @default(cuid())
+  feedId          String
+  feed            ThreatFeed @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  type            String                       // cve|ip|domain|url|hash|email|other
+  value           String                       // the indicator value (e.g. CVE-2024-1234)
+  description     String?
+  severity        String?                       // critical|high|medium|low|info
+  confidence      String   @default("medium")  // high|medium|low
+  references      String   @default("[]")        // JSON array of URLs
+  publishedAt     DateTime?
+  retrievedAt     DateTime @default(now())
+  verificationState String @default("UNVERIFIED") // UNVERIFIED|VERIFIED|STALE|FAILED
+  rawJson         String?                       // raw entry for traceability
+  createdAt       DateTime @default(now())
+
+  @@index([feedId])
+  @@index([type])
+  @@index([value])
+  @@index([severity])
+}
+
+// ─── User Password (DB-backed, changeable at runtime) ────────────────────────
+// Stores the current password hash in the DB so it can be changed via API
+// without restarting the server. Falls back to env-var password if no row exists.
+
+model UserPassword {
+  id          Int      @id @default(1)
+  username    String   @unique
+  passwordHash String
+  role        String   @default("ADMIN")
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}

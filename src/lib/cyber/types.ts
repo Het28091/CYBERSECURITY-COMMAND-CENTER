@@ -14,6 +14,7 @@ export type ViewId =
   | 'ai-security'
   | 'threat-intel'
   | 'compliance'
+  | 'verification'
   | 'ai-agents'
   | 'automation'
   | 'logs'
@@ -46,6 +47,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'threat-intel',    label: 'Threat Intelligence', icon: 'Radar',           group: 'Security' },
 
   { id: 'compliance',      label: 'Compliance',          icon: 'Scale',           group: 'Governance' },
+  { id: 'verification',    label: 'Verification',        icon: 'BadgeCheck',      group: 'Governance' },
   { id: 'audit',           label: 'Audit',               icon: 'ClipboardList',   group: 'Governance' },
 
   { id: 'ai-agents',       label: 'AI Agents',           icon: 'Users',           group: 'System' },

@@ -6,10 +6,14 @@ import { ok, err } from '@/lib/cyber/api';
 import { checkPath } from '@/lib/cyber/security/path';
 import { getSettings } from '@/lib/cyber/settings';
 import { record } from '@/lib/cyber/audit/record';
+import { requireAuth } from '@/lib/cyber/auth';
 
 export const runtime = 'nodejs';
 
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const __auth = await requireAuth(_req, 'run');
+  if (!__auth.ok) return __auth.response!;
+
   const { id } = await ctx.params;
   const project = await db.project.findUnique({ where: { id } });
   if (!project) return err('NOT_FOUND', 'Project not found', 404);
