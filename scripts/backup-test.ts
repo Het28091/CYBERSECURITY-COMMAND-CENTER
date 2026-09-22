@@ -14,7 +14,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { execSync } from 'node:child_process';
 
-const DB = '/home/z/my-project/db/custom.db';
+const DB = process.env.DATABASE_URL ? process.env.DATABASE_URL.replace('file:', '') : process.cwd() + '/db/custom.db';
 const BACKUP = '/tmp/cybercc-backup-test.db';
 
 console.log('=== Backup test (F-002 fix: no DB replacement) ===\n');
