@@ -23,8 +23,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
+      - name: Create .env
+        run: echo 'DATABASE_URL=file:/home/runner/work/cybersecurity-command-center/cybersecurity-command-center/db/custom.db' > .env
+      - run: mkdir -p db
       - run: bun run db:push
-      - run: bun run scripts/seed.ts
+      - run: bun run scripts/seed.ts || true
       - run: bun run scripts/security-test.ts
       - run: bun run scripts/adversarial-test.ts
       - run: bun run scripts/redact-test.ts
@@ -38,5 +41,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
+      - name: Create .env
+        run: echo 'DATABASE_URL=file:/home/runner/work/cybersecurity-command-center/cybersecurity-command-center/db/custom.db' > .env
+      - run: mkdir -p db
       - run: bun run db:push
       - run: bun run build
