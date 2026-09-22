@@ -13,6 +13,7 @@ import { TopBar } from '@/components/cyber/TopBar';
 import { CommandPalette } from '@/components/cyber/CommandPalette';
 import { GlobalSearch } from '@/components/cyber/GlobalSearch';
 import { Ambient3DBackground } from '@/components/cyber/3d/Ambient3DBackground';
+import { AIAssistantPanel } from '@/components/cyber/AIAssistantPanel';
 import { LoginView } from '@/components/cyber/views/LoginView';
 import { useAppStore } from '@/stores/app';
 import { useAuthStore } from '@/stores/auth';
@@ -90,6 +91,7 @@ export default function Page() {
           </div>
           <CommandPalette />
           <GlobalSearch />
+          <AIAssistantPanel />
           <Toaster richColors position="bottom-right" />
         </div>
       </QueryClientProvider>

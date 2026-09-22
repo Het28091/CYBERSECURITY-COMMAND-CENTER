@@ -317,3 +317,45 @@ Stage Summary:
 - 118/118 tests pass — 0 functional regressions, 0 security regressions.
 - 7 before + 7 after screenshots captured as evidence.
 - Design system documented in docs/UI_DESIGN_SYSTEM.md.
+
+---
+Task ID: S27-AI
+Agent: main
+Task: Add AI feature — AI mode that powers the whole project with AI capabilities.
+
+Work Log:
+- Created AI engine (`src/lib/cyber/ai/engine.ts`) with 5 AI functions:
+  - `aiChat()` — general chat with context about the current project/view
+  - `analyzeProjectSecurity()` — AI-powered security posture analysis using real findings
+  - `explainVulnerability()` — plain-language CVE explanation
+  - `summarizeReadme()` — AI README summarization
+  - `suggestRunCommand()` — AI-suggested run command from project metadata
+- All AI functions use z-ai-web-dev-sdk (server-side only, never client).
+- All AI output is advisory — never executes commands. The same security policy applies.
+- All AI input is redacted before sending to the LLM.
+- Created 3 API endpoints:
+  - `POST /api/ai/chat` — general AI chat with context
+  - `POST /api/ai/analyze` — project security analysis
+  - `POST /api/ai/explain` — CVE explanation
+- All endpoints require authentication + check `aiAssistanceEnabled` setting.
+- All endpoints record audit events.
+- Created `AIAssistantPanel` component — floating chat panel accessible from any view:
+  - Floating "AI" button in bottom-right corner (only visible when AI is enabled)
+  - Chat panel with message history, suggestions, and input
+  - Shows "AI is advisory only · Never executes commands · Output may be inaccurate" disclaimer
+  - Auto-scrolls to latest message
+  - Supports Enter to send
+- Added `AIAssistantPanel` to `page.tsx` — renders on every authenticated view.
+- AI mode is controlled by the existing `aiAssistanceEnabled` setting in Settings.
+  - When enabled: AI button appears, all AI endpoints work.
+  - When disabled: AI button hidden, AI endpoints return 403.
+- Browser-verified: AI button appears on dashboard, clicking opens chat panel, AI responds.
+- API-verified: AI Chat returns real LLM responses. AI Analyze returns real security analysis.
+
+Stage Summary:
+- AI feature implemented and working.
+- 118/118 existing tests pass — 0 regressions.
+- AI Chat API: PASS (real LLM response)
+- AI Analyze API: PASS (real security analysis with findings)
+- Browser: AI button visible, chat panel opens, suggestions work.
+- Lint: PASS (0 errors)
