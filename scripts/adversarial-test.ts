@@ -6,7 +6,7 @@
 import { checkPath } from '../src/lib/cyber/security/path';
 import { checkCommand } from '../src/lib/cyber/security/command';
 
-const roots = ['/home/z/my-project', '/tmp'];
+const roots = [process.cwd(), '/tmp'];
 let failures = 0;
 let passes = 0;
 

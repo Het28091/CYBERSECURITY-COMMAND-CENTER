@@ -3,7 +3,7 @@
 import { checkPath } from '../src/lib/cyber/security/path';
 import { checkCommand } from '../src/lib/cyber/security/command';
 
-const roots = ['/home/z/my-project', '/tmp'];
+const roots = [process.cwd(), '/tmp'];
 
 function assert(name: string, cond: boolean) {
   if (!cond) { console.error(`FAIL: ${name}`); process.exit(1); }
@@ -11,7 +11,7 @@ function assert(name: string, cond: boolean) {
 }
 
 // Path safety tests
-const r1 = checkPath('/home/z/my-project', { roots });
+const r1 = checkPath(process.cwd(), { roots });
 assert('Valid path accepted', r1.ok);
 assert('Canonical path set', r1.canonical === '/home/z/my-project');
 

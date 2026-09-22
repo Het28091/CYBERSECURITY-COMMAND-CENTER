@@ -139,7 +139,7 @@ export function defaultAllowedRoots(): string[] {
   // Default to the user's project sandbox + upload directory.
   // (The user can broaden this in Settings.)
   return [
-    '/home/z/my-project',
+    process.cwd(),
     '/tmp',
   ];
 }
